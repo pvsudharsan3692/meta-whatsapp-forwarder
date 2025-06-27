@@ -1,32 +1,29 @@
 export default async function handler(req, res) {
   if (req.method === 'GET') {
+    const VERIFY_TOKEN = "123456"; // your verify token
+    const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
-    const mode = req.query['hub.mode'];
 
-    if (mode === 'subscribe' && token === '123456') {
+    if (mode && token === VERIFY_TOKEN) {
       return res.status(200).send(challenge);
+    } else {
+      return res.sendStatus(403);
     }
-    return res.status(403).send('Verification failed');
   }
 
   if (req.method === 'POST') {
-    console.log("Incoming message:", JSON.stringify(req.body));
+    console.log("🔔 Incoming Webhook Data:", JSON.stringify(req.body, null, 2));
 
-    const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-
-    if (message) {
-      await fetch('https://pvautomationsolutions.app.n8n.cloud/webhook-test/a1c94564-c6fa-478f-9065-b1a8dac8afd4', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body),
-      });
-      return res.status(200).send('Message forwarded to n8n');
-    }
-
-    return res.status(200).send('Non-message payload ignored');
+    // For now, just return the data so we can inspect it
+    return res.status(200).json({
+      message: "Received",
+      data: req.body
+    });
   }
 
   return res.status(405).send('Method Not Allowed');
+}
+
 }
 
