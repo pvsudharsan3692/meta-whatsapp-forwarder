@@ -1,3 +1,9 @@
+if (method === 'POST') {
+  const body = await req.json();
+  console.log("Received body:", JSON.stringify(body)); // 👈 Log incoming message
+
+  const message = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+
 export const config = {
   runtime: 'edge',
 };
