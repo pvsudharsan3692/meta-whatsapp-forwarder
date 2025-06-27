@@ -1,47 +1,32 @@
-if (method === 'POST') {
-  const body = await req.json();
-  console.log("Received body:", JSON.stringify(body)); // 👈 Log incoming message
-
-  const message = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(req) {
-  const { method, url } = req;
-
-  if (method === 'GET') {
-    const { searchParams } = new URL(url);
-    const token = searchParams.get('hub.verify_token');
-    const challenge = searchParams.get('hub.challenge');
-    const mode = searchParams.get('hub.mode');
+export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+    const mode = req.query['hub.mode'];
 
     if (mode === 'subscribe' && token === '123456') {
-      return new Response(challenge, { status: 200 });
+      return res.status(200).send(challenge);
     }
-    return new Response('Verification failed', { status: 403 });
+    return res.status(403).send('Verification failed');
   }
 
-  if (method === 'POST') {
-    const body = await req.json();
-    const message = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (req.method === 'POST') {
+    console.log("Incoming message:", JSON.stringify(req.body));
+
+    const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
 
     if (message) {
-      const response = await fetch(
-        'https://pvautomationsolutions.app.n8n.cloud/webhook-test/a1c94564-c6fa-478f-9065-b1a8dac8afd4',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }
-      );
-
-      return new Response('Message forwarded to n8n', { status: 200 });
+      await fetch('https://pvautomationsolutions.app.n8n.cloud/webhook-test/a1c94564-c6fa-478f-9065-b1a8dac8afd4', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body),
+      });
+      return res.status(200).send('Message forwarded to n8n');
     }
 
-    return new Response('Non-message payload ignored', { status: 200 });
+    return res.status(200).send('Non-message payload ignored');
   }
 
-  return new Response('Method Not Allowed', { status: 405 });
+  return res.status(405).send('Method Not Allowed');
 }
+
